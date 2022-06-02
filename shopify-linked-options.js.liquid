@@ -1,0 +1,130 @@
+<script>
+
+const variants = {{ product.variants | json }};
+const options = {{ product.options | json}};
+
+const variantSelectorOption2 = $('#variant-selector #option2');
+
+const variantOptions = Array.from(new Set(variants.map(s => s.option1))).map(option => {
+    return {
+        option1: option,
+        id: variants.filter(s => s.option1 === option).map(id => id.id),
+        option2: variants.filter(s => s.option1 === option).map(option2 => option2.option2),
+        available: variants.filter(s => s.option1 === option).map(available => available.available)
+    }
+})
+
+
+let hasVariantsOption = false;
+if (variantOptions.length > 1) {
+  hasVariantsOption = true;
+    $('#variant-selector').append('<span>' + options[0] + '</span>');
+    $('#variant-selector').append('<div class="select_wrapper"><select id="option1" name="option1"></select></div>');
+        const variantSelectorOption1 = $('#variant-selector #option1');
+}
+
+/* Check if product has an option2 */
+let hasVariantsOption2 = false;
+
+variants.forEach(function (option) {
+    if (option.option2 != null) {
+        hasVariantsOption2 = true;
+    }
+})
+
+
+$(function () {
+    if (hasVariantsOption == true ) {
+    initVariantOptions(variantOptions);
+    updateSelectedVariant(hasVariantsOption2);
+    }
+})
+
+
+$('#variant-selector #option1').on('change', function (event) {
+    updateVariantOptions(variantOptions, event);
+
+})
+
+$('#variant-selector').on('change', function () {
+    updateSelectedVariant(hasVariantsOption2);
+
+})
+
+function initVariantOptions(variantOptions) {
+    let firstAvailable = false;
+    variantOptions.forEach(function (variant, i) {
+
+        let isAvailable = ' ';
+
+        if (variant.available[0] == true && firstAvailable == false) {
+            isAvailable = ' selected ';
+            firstAvailable = true;
+        }
+
+        let title = variant.option1;
+        if (hasVariantsOption2 == false) { /* If product does not have option2, set "Sold out" on option1 */
+            if (variant.available[0] == false) {
+                title = variant.option1 + ' (Udsolgt)';
+            }
+        }
+        let variantOption1 = '<option' + isAvailable + 'value="' + i + '">' + title + '</option>';
+        $('.variant-selector select#option1').append(variantOption1);
+    })
+
+
+    /* If product has option2, create and populate new <select> */
+    if (hasVariantsOption2 == true) {
+  
+        let currentIndex =  $('#variant-selector #option1').children('option:selected').val();
+        let variantOption2 = variantOptions[currentIndex].option2;
+         $('#variant-selector').append('<span>' + options[1] + '</span>');
+        $('#variant-selector').append('<div class="select_wrapper"><select id="option2" name="option2"></select></div>');
+        variantOption2.forEach(function (option, i) {
+            let option2 = '<option value="' + i + '">' + option + '</option>';
+
+            // let option2 = '<option value="' + variantOptions[currentIndex].id[i] + '">' + option + '</option>';
+            $('.variant-selector select#option2').append(option2);
+        })
+
+    }
+}
+
+function updateVariantOptions(variantOptions, event) {
+
+    let thisEvent = event.target;
+
+    $('.variant-selector select#option2').empty()
+    let currentIndex = $(thisEvent).children('option:selected').val();
+    let variantOption2 = variantOptions[currentIndex].option2;
+
+    let isAvailable = ' ';
+    variantOption2.forEach(function (option, i) {
+
+        if (variantOptions[currentIndex].available[i] == false) {
+            option = option + ' (Udsolgt)';
+            isAvailable = ' disabled selected';
+        }
+        let option2 = '<option value="' + i + '">' + option + '</option>';
+        // let option2 = '<option value="' + variantOptions[currentIndex].id[i] + '">' + option + '</option>';
+        $('.variant-selector select#option2').append(option2);
+    })
+
+
+}
+
+function updateSelectedVariant(hasVariantsOption2) {
+
+    let option1 = $('#variant-selector #option1').val();
+    let option2 = $('#variant-selector #option2').val();
+
+    if (hasVariantsOption2 == false) {
+        option2 = '0';
+    }
+
+    let currentId = variantOptions[option1].id[option2];
+
+    $('[name="id"]').val(currentId);
+}
+
+</script>
